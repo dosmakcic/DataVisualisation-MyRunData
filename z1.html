@@ -231,7 +231,7 @@
 
 
           
-          // Create SVG element
+          
           var svg = d3.select("#chart")
             .append("svg")
             .attr("width", width)
@@ -291,7 +291,7 @@
 
           var yAxis = d3.axisLeft(y);
 
-          // Add bars to chart
+        
           svg.selectAll("rect")
             .data(calories)
             .enter()
@@ -382,7 +382,7 @@
 
 
 
-          // Add x axis to chart
+         
           svg.append("g")
             .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")")
             .call(xAxis)
@@ -392,7 +392,7 @@
             .attr("dy", "-.55em")
             .attr("transform", "rotate(-45)");
 
-          // Add x label to chart
+       
           svg
             .append("text")
             .attr("class", "x-label")
@@ -403,7 +403,7 @@
             .attr("fill","white")
             .text("Date");
 
-          // Add y label to chart
+        
           svg
             .append("text")
             .attr("class", "y-label")
@@ -418,7 +418,7 @@
            
 
 
-          // Add y axis to chart
+        
           svg.append("g")
             .call(yAxis);
 
@@ -497,7 +497,7 @@
             .attr("fill","white")
             .text("Date");
 
-          // Add y label to chart
+          
           svg
             .append("text")
             .attr("class", "y-label")
@@ -511,7 +511,7 @@
 
        
 
-        // Line chart code here
+       
         console.log("Drawing line chart");
       }
 
@@ -538,7 +538,9 @@ var x = d3.scaleBand()
 
     var yAxis = d3.axisLeft(y);
 
-    // Add bars to chart
+    
+
+
     svg.selectAll("rect")
       .data(km)
       .enter()
@@ -619,7 +621,7 @@ var x = d3.scaleBand()
 
 
 
-    // Add x axis to chart
+    
     svg.append("g")
       .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")")
       .call(xAxis)
@@ -629,7 +631,9 @@ var x = d3.scaleBand()
       .attr("dy", "-.55em")
       .attr("transform", "rotate(-45)");
 
-    // Add x label to chart
+ 
+
+
     svg
       .append("text")
       .attr("class", "x-label")
@@ -640,7 +644,9 @@ var x = d3.scaleBand()
       .attr("fill","white")
       .text("Date");
 
-    // Add y label to chart
+   
+
+
     svg
       .append("text")
       .attr("class", "y-label")
@@ -655,14 +661,14 @@ var x = d3.scaleBand()
      
 
 
-    // Add y axis to chart
+  
     svg.append("g")
       .call(yAxis);
 
      
 
 
-        // Pie chart code here
+        
         console.log("Drawing pie chart");
       }
 
@@ -674,7 +680,7 @@ var x = d3.scaleBand()
         if (graphType === "calories") {
           
 
-// Select all elements in the SVG and remove them
+
            svg.selectAll("*").remove();
           drawBarChart();
 
@@ -693,7 +699,7 @@ var x = d3.scaleBand()
 
 
 
-          // Define scales and axis
+    
        
         })
         .catch(function(error) {
