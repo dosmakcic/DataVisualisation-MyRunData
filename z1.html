@@ -92,9 +92,10 @@
     </div>
   <div class="wrapper">
     <div id="chart"></div>
+    
     <div id="pie-chart"></div>
   </div>
-    
+    <div id="legend"></div>
     <div class="tooltip"></div>
     <div id="detail"></div>
     <script>
@@ -140,7 +141,23 @@
 
 
 
+          var legendData1 = [
+              { color: "aqua", label: "Time < 25" },
+              { color: "blue", label: "Time >= 25" }
+            ];
 
+
+
+        var legendSvg = d3.select("#legend")
+          .append("svg")
+          .attr("class", "legend")
+          .attr("width", 200)
+          .attr("height", 50);
+
+          var legendData2 = [
+                          { color: "lightgreen", label: "Time < 25" },
+                          { color: "green", label: "Time >= 25" }
+                        ];
          
         
 
@@ -277,7 +294,39 @@
 
      height=300;
 
-      
+
+         
+
+            
+            var legend = legendSvg.append("g")
+              .attr("transform", "translate(10,10)");
+
+            
+            var legendItems = legend.selectAll(".legend-item")
+              .data(legendData1)
+              .enter()
+              .append("g")
+              .attr("class", "legend-item")
+              .attr("transform", function(d, i) {
+                return "translate(0," + (i * 20) + ")";
+              });
+
+            legendItems.append("rect")
+              .attr("width", 10)
+              .attr("height", 10)
+              .attr("fill", function(d) { return d.color; });
+
+            legendItems.append("text")
+              .attr("x", 20)
+              .attr("y", 8)
+              .attr("fill","white")
+              .text(function(d) { return d.label; });
+
+
+
+
+
+      //skala za podatke x os i y os
       var x = d3.scaleBand()
             .domain(dates)
             .range([0, width - margin.left - margin.right])
@@ -523,6 +572,32 @@
       
       function drawPieChart() {
         height=300;
+        
+        var legend = legendSvg.append("g")
+              .attr("transform", "translate(10,10)");
+
+            
+            var legendItems = legend.selectAll(".legend-item")
+              .data(legendData2)
+              .enter()
+              .append("g")
+              .attr("class", "legend-item")
+              .attr("transform", function(d, i) {
+                return "translate(0," + (i * 20) + ")";
+              });
+
+            legendItems.append("rect")
+              .attr("width", 10)
+              .attr("height", 10)
+              .attr("fill", function(d) { return d.color; });
+
+            legendItems.append("text")
+              .attr("x", 20)
+              .attr("y", 8)
+              .attr("fill","white")
+              .text(function(d) { return d.label; });
+
+
 
       
 var x = d3.scaleBand()
@@ -682,13 +757,20 @@ var x = d3.scaleBand()
 
 
            svg.selectAll("*").remove();
+           legendSvg.selectAll("*").remove();
           drawBarChart();
 
         } else if (graphType === "duration") {
+
           svg.selectAll("*").remove();
+          legendSvg.selectAll("*").remove();
+          
           drawLineChart();
         } else if (graphType === "distance") {
+          
           svg.selectAll("*").remove();
+          legendSvg.selectAll("*").remove();
+          
           drawPieChart();
         }
       }
