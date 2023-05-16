@@ -1,13 +1,704 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html>
+  <head>
+    <title>My Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <script src="https://d3js.org/d3.v3.min.js"></script>
-    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <style>
+  body{
+    margin: 20;
+    padding: auto;
+    height: 1000;
+    background-color: #010101;
+  }
 
-    <title>Praćenje progresa treniranja</title>
-</head>
-<body>
+
+  
+    #chart{
+      background-color: #010101;
+      color: aquamarine;
+      
+      
+    }
+    #detail {
+      position: absolute;
+      display: none;
+      background-color: #fff;
+      border: 1px solid #010101;
+      padding: 10px;
+      border-radius: 1.5em;
+      font-family:'Rockwell';
+      text-decoration-style: wavy;
+      background-color: aquamarine;
+      color: blue;
+    }
+   
+    .tooltip{
+      position:absolute;
+      border:1px solid #ddd;
+      padding: 10px;
+      display: none;
+      background-color: black;
+      color: white;
+
     
-</body>
+    }
+
+    #graph-type{
+      border-radius: 1em;
+      border-color: purple;
+      height: 20px;
+      color: palevioletred;
+      background-color: black;
+    }
+
+    .selector{
+      border-radius: 0.3em;
+      border-color: purple;
+      border-width: 3px;
+      background-color: rgb(0, 0, 0);
+      height: 30px;
+      color: #fff;
+    }
+
+
+    .wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: auto;
+
+  
+}
+
+#chart ,
+#pie-chart{
+
+  display: inline-block;
+  width: 50%;
+}
+
+
+    </style>
+  </head>
+  <body>
+    <div class="selector">
+      <label for="graph-type-select">Choose a graph type:</label>
+      <select id="graph-type">
+        <option value="distance">Distance (km)</option>
+        <option value="duration">Duration (min/km)</option>
+        <option value="calories">Calories</option>
+      </select>
+    </div>
+  <div class="wrapper">
+    <div id="chart"></div>
+    <div id="pie-chart"></div>
+  </div>
+    
+    <div class="tooltip"></div>
+    <div id="detail"></div>
+    <script>
+      d3.json("exercise.json")
+        .then( function(data) {
+
+          
+
+    
+
+          var dates = data.map(function(d) {
+            return d.Date;
+          });
+
+          var calories = data.map(function(d) {
+            return parseFloat(d.Calories.replace(",", ".")); 
+          });
+
+          var km = data.map(function(d) {
+            return parseFloat(d.Km.replace(",", ".")); 
+          });
+
+          var minKm = data.map(function(d) {
+            return d["min/km"];
+          });
+
+          var time = data.map(function(d) {
+            return d.Time;
+          });
+
+          var caloriesByMonth = d3.rollup(data, 
+              v => d3.sum(v, d => parseFloat(d.Calories.replace(",", "."))),
+              d => new Date(d.Date.split(".").reverse().join("-")).getMonth()
+            );
+
+  // pretvaranje u ključ-vrijednost za svaki mjesec ukupno kalorija istrošenih
+  var caloriesData = Array.from(caloriesByMonth, ([key, value]) => {
+    
+    return { month: parseInt(key)+1, calories: value };
+  });
+
+  console.log(caloriesData);
+
+
+
+
+         
+        
+
+
+
+
+
+
+
+          var width = 700;
+          var height = 400;
+          var margin = {top: 20, right: 100, bottom: 100, left: 70};
+
+
+
+          var pieWidth=550;
+          var pieHeight=350;
+          var radius = Math.min(width, height) / 3;
+
+
+
+
+          
+          var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+          var pieSvg=d3.select("#pie-chart")
+                      .append("svg")
+                      .attr("width", pieWidth)
+                      .attr("height", pieHeight)
+                      .append("g")
+                      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+                      var pie = d3.pie()
+    .value(function(d) { return d.calories; })
+    .sort(null);
+
+              var arc = d3.arc()
+                  .outerRadius(radius - 10)
+                  .innerRadius(0);
+
+              var labelArc = d3.arc()
+                  .outerRadius(radius - 40)
+                  .innerRadius(radius - 40);
+
+              var g = pieSvg.selectAll(".arc")
+                  .data(pie(caloriesData))
+                  .enter().append("g")
+                  .attr("class", "arc")
+                  .on("mouseover", function(event, d) {
+                        d3.select(this)
+                          .transition()
+                          .duration(200)
+                          .attr("transform", function(d) {
+                            var a = (d.startAngle + d.endAngle) / 2 - Math.PI / 2;
+                            return "translate(" + Math.cos(a) * 10 + "," + Math.sin(a) * 10 + ")";
+                          });
+                      })
+
+                  .on("mouseout", function(event, d) {
+                        d3.select(this)
+                          .transition()
+                          .duration(200)
+                          .attr("transform", "translate(0,0)");
+                      });
+
+
+              g.append("path")
+                  .attr("d", arc)
+                  .style("fill", function(d) { return color(d.data.month); })
+                  .transition()
+                  .duration(1000)
+                  .attrTween("d", function(d) {
+                      var i = d3.interpolate(d.startAngle, d.endAngle);
+                      return function(t) {
+                          d.endAngle = i(t);
+                          return arc(d);
+                      };
+                  });
+
+              g.append("text")
+                  .attr("transform", function(d) {
+                      return "translate(" + labelArc.centroid(d) + ")";
+                  })
+                  .attr("dy", ".35em")
+                  .text(function(d) { return d.data.month; });
+
+
+
+          
+          // Create SVG element
+          var svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+           
+
+
+            function convertMinPerKmToSecondsPerKm(minPerKm) {
+              // Check if the input is a string
+              if (typeof minPerKm !== 'string') {
+                console.error('Input must be a string in the format of "mm.ss"');
+                return null;
+              }
+              
+              // Split the input into minutes and seconds
+              var parts = minPerKm.split(":");
+              if (parts.length !== 2) {
+                console.error('Input must be a string in the format of "mm.ss"');
+                return null;
+              }
+              var minutes = parseInt(parts[0]);
+              var seconds = parseInt(parts[1]);
+              
+              // Check if minutes and seconds are valid numbers
+              if (isNaN(minutes) || isNaN(seconds)) {
+                console.error('Input must be a string in the format of "mm.ss"');
+                return null;
+              }
+              
+              // Calculate the time in seconds per kilometer
+              return 60 / (minutes + seconds / 60);
+            }
+
+
+
+            //CRTANJE BAR CHARTA SA KALORIJAMA I DATUMIMA
+
+     function drawBarChart() {
+      
+
+
+     height=300;
+
+      
+      var x = d3.scaleBand()
+            .domain(dates)
+            .range([0, width - margin.left - margin.right])
+            .padding(0.1);
+
+          var y = d3.scaleLinear()
+            .domain([0, d3.max(calories)])
+            .range([height - margin.top - margin.bottom, 0]);
+
+          var xAxis = d3.axisBottom(x);
+
+          var yAxis = d3.axisLeft(y);
+
+          // Add bars to chart
+          svg.selectAll("rect")
+            .data(calories)
+            .enter()
+            .append("rect")
+            .attr("x", function(d,i) {
+              return x(dates[i]);
+            })
+            .attr("y", function(d) {
+              return y(0);
+            })
+            .attr("width", x.bandwidth())
+            .attr("height", function(d) {
+              return 0;
+            })
+            .attr("fill", function(d){
+            var timeValue = time[calories.indexOf(d)];
+                if(parseInt(timeValue.split(":")[0]) < 25){
+                  return "aqua";
+                }
+                else{
+                  return "blue";
+                }
+
+                  })
+            .on("mousemove", function(event, d) {
+              var date = dates[calories.indexOf(d)];
+              var kmValue = km[calories.indexOf(d)];
+              var timeValue = time[calories.indexOf(d)];
+              var minKmValue = minKm[calories.indexOf(d)];
+              var tooltip = d3.select(".tooltip")
+                .html("Date: " + date + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
+                .style("display", "block");
+              tooltip.style("left", event.pageX + "px");
+              tooltip.style("top", event.pageY + "px");
+            })
+            .on("mouseover", function(event,d) {
+              d3.select(this)
+                .attr("fill", "orange");
+              var date = dates[calories.indexOf(d)];
+              var kmValue = km[calories.indexOf(d)];
+              var timeValue = time[calories.indexOf(d)];
+              var minKmValue = minKm[calories.indexOf(d)];
+              var tooltip = d3.select(".tooltip")
+                .html("Date: " + date + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
+                .style("display", "block");
+              tooltip.style("left", event.pageX + "px");
+              tooltip.style("top", event.pageY + "px");  
+            })
+            .on("mouseout", function(d) {
+              d3.select(this)
+              .attr("fill", function(d){
+            var timeValue = time[calories.indexOf(d)];
+                  if(parseInt(timeValue.split(":")[0]) < 25){
+                    return "aqua";
+                  }
+                  else{
+                    return "blue";
+                  }
+
+                    });
+
+              d3.select(".tooltip")
+                .style("display", "none");
+            })
+            .transition()
+            .duration(1000)
+            .delay(function(d, i) {
+              return i * 100;
+            })
+            .attr("y", function(d) {
+              return y(d);
+            })
+            .attr("height", function(d) {
+              return height - margin.top - margin.bottom - y(d);
+            });
+
+        /*    .on("click", function(event,d) {
+              var date = dates[calories.indexOf(d)];
+              var kmValue = km[calories.indexOf(d)];
+              var timeValue = time[calories.indexOf(d)];
+              var minKmValue = minKm[calories.indexOf(d)];
+            var detail = d3.select("#detail")
+
+            .html("Date: " + date  + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
+            .style("display", "block");
+               });
+*/
+
+
+
+          // Add x axis to chart
+          svg.append("g")
+            .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")")
+            .call(xAxis)
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", "-.55em")
+            .attr("transform", "rotate(-45)");
+
+          // Add x label to chart
+          svg
+            .append("text")
+            .attr("class", "x-label")
+            .attr("text-anchor", "end")
+            .attr("font-family","verdana")
+            .attr("x", 200)
+            .attr("y", 270)
+            .attr("fill","white")
+            .text("Date");
+
+          // Add y label to chart
+          svg
+            .append("text")
+            .attr("class", "y-label")
+            .attr("text-anchor", "end")
+            .attr("font-family","verdana")
+            .attr("x", -50)
+            .attr("y", -margin.left + 20)
+            .attr("transform", "rotate(-90)")
+            .attr("fill","white")
+            .text("Calories");
+
+           
+
+
+          // Add y axis to chart
+          svg.append("g")
+            .call(yAxis);
+
+           
+
+        console.log("Drawing bar chart");
+      }
+      
+
+
+
+
+      //CRTANJE GRAFA  F(DATUMI)-> MIN/KM
+       function drawLineChart() {
+                var xScale = d3.scaleBand()
+                          .domain(dates)
+                          .range([0, width - margin.left - margin.right])
+                          .padding(1.2);
+
+
+               minKm= data.map(function(d) {
+      return parseFloat(d["min/km"].replace(":", "."));
+    }); 
+
+    var secPerKm = minKm.map(convertMinPerKmToSecondsPerKm);
+    
+    
+            var yScale = d3.scaleLinear()
+                          .domain([3.5, 5.8])
+                          .range([230, 0]);
+
+            var xAxis = d3.axisBottom(xScale);
+            var yAxis = d3.axisLeft(yScale);
+
+
+           /* var svg = d3.select("body")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")"); */
+
+             
+
+                svg.append("g")
+            .attr("transform", "translate(0,230)")
+            .call(xAxis)
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", "-.55em")
+            .attr("transform", "rotate(-45)");
+
+    svg.append("g")
+       .call(yAxis);
+
+    svg.append("path")
+       .datum(data)
+       .attr("fill", "none")
+       .attr("stroke", "steelblue")
+       .attr("stroke-width", 2.5)
+       .attr("d", d3.line()
+                   .x(function(d) { return xScale(d.Date) + xScale.bandwidth() / 2; })
+                   .y(function(d) { return yScale(parseFloat(d["min/km"].replace(":", "."))); })
+                   .curve(d3.curveMonotoneX));              
+
+
+
+                   svg
+            .append("text")
+            .attr("class", "x-label")
+            .attr("text-anchor", "end")
+            .attr("font-family","verdana")
+            .attr("x", 200)
+            .attr("y", 290)
+            .attr("fill","white")
+            .text("Date");
+
+          // Add y label to chart
+          svg
+            .append("text")
+            .attr("class", "y-label")
+            .attr("text-anchor", "end")
+            .attr("font-family","verdana")
+            .attr("x", -50)
+            .attr("y", -margin.left + 20)
+            .attr("transform", "rotate(-90)")
+            .attr("fill","white")
+            .text("min/km");
+
+       
+
+        // Line chart code here
+        console.log("Drawing line chart");
+      }
+
+
+
+
+
+
+      
+      function drawPieChart() {
+        height=300;
+
+      
+var x = d3.scaleBand()
+      .domain(dates)
+      .range([0, width - margin.left - margin.right])
+      .padding(0.1);
+
+    var y = d3.scaleLinear()
+      .domain([0, d3.max(km)])
+      .range([height - margin.top - margin.bottom, 0]);
+
+    var xAxis = d3.axisBottom(x);
+
+    var yAxis = d3.axisLeft(y);
+
+    // Add bars to chart
+    svg.selectAll("rect")
+      .data(km)
+      .enter()
+      .append("rect")
+      .attr("x", function(d,i) {
+        return x(dates[i]);
+      })
+      .attr("y", function(d) {
+        return y(0);
+      })
+      .attr("width", x.bandwidth())
+      .attr("height", function(d) {
+        return 0;
+      })
+      .attr("fill", function(d){
+        var timeValue = time[km.indexOf(d)];
+        if(parseInt(timeValue.split(":")[0]) < 25){
+          return "lightgreen";
+        }
+        else{
+          return "green";
+        }
+
+      })
+      .on("mousemove", function(event, d) {
+        var date = dates[km.indexOf(d)];
+        var kmValue = km[km.indexOf(d)];
+        var timeValue = time[km.indexOf(d)];
+        var minKmValue = minKm[km.indexOf(d)];
+        var tooltip = d3.select(".tooltip")
+          .html("Date: " + date + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
+          .style("display", "block");
+        tooltip.style("left", event.pageX + "px");
+        tooltip.style("top", event.pageY + "px");
+      })
+      .on("mouseover", function(event,d) {
+        d3.select(this)
+          .attr("fill", "white");
+        var date = dates[km.indexOf(d)];
+        var kmValue = km[km.indexOf(d)];
+        var timeValue = time[km.indexOf(d)];
+        var minKmValue = minKm[km.indexOf(d)];
+        var tooltip = d3.select(".tooltip")
+          .html("Date: " + date + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
+          .style("display", "block");
+        tooltip.style("left", event.pageX + "px");
+        tooltip.style("top", event.pageY + "px");  
+      })
+      .on("mouseout", function(d) {
+        d3.select(this)
+          .attr("fill", function(d){
+            var timeValue = time[km.indexOf(d)];
+        if(parseInt(timeValue.split(":")[0]) < 25){
+          return "lightgreen";
+        }
+        else{
+          return "green";
+        }
+
+          });
+
+        d3.select(".tooltip")
+          .style("display", "none");
+      })
+      .transition()
+      .duration(1000)
+      .delay(function(d, i) {
+        return i * 100;
+      })
+      .attr("y", function(d) {
+        return y(d);
+      })
+      .attr("height", function(d) {
+        return height - margin.top - margin.bottom - y(d);
+      });
+
+
+
+
+
+    // Add x axis to chart
+    svg.append("g")
+      .attr("transform", "translate(0," + (height - margin.top - margin.bottom) + ")")
+      .call(xAxis)
+      .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", "-.55em")
+      .attr("transform", "rotate(-45)");
+
+    // Add x label to chart
+    svg
+      .append("text")
+      .attr("class", "x-label")
+      .attr("text-anchor", "end")
+      .attr("font-family","verdana")
+      .attr("x", 200)
+      .attr("y", 270)
+      .attr("fill","white")
+      .text("Date");
+
+    // Add y label to chart
+    svg
+      .append("text")
+      .attr("class", "y-label")
+      .attr("text-anchor", "end")
+      .attr("font-family","verdana")
+      .attr("x", -50)
+      .attr("y", -margin.left + 20)
+      .attr("transform", "rotate(-90)")
+      .attr("fill","white")
+      .text("Kilometers");
+
+     
+
+
+    // Add y axis to chart
+    svg.append("g")
+      .call(yAxis);
+
+     
+
+
+        // Pie chart code here
+        console.log("Drawing pie chart");
+      }
+
+      function drawGraph() {
+        const graphType = document.getElementById("graph-type").value;
+        
+        
+        
+        if (graphType === "calories") {
+          
+
+// Select all elements in the SVG and remove them
+           svg.selectAll("*").remove();
+          drawBarChart();
+
+        } else if (graphType === "duration") {
+          svg.selectAll("*").remove();
+          drawLineChart();
+        } else if (graphType === "distance") {
+          svg.selectAll("*").remove();
+          drawPieChart();
+        }
+      }
+      
+      drawGraph();
+
+      d3.select("#graph-type").on("change", drawGraph);
+
+
+
+          // Define scales and axis
+       
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    </script>
+  </body>
 </html>
