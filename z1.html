@@ -16,7 +16,8 @@
   
     #chart{
       background-color: #010101;
-      color: aquamarine;
+      color:  aquamarine;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       
       
     }
@@ -71,11 +72,23 @@
   
 }
 
+#pie-chart{
+  color: white;
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+ 
+}
+
 #chart ,
 #pie-chart{
-
+  
   display: inline-block;
   width: 50%;
+}
+
+.selector{
+  color: white;
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 
@@ -86,14 +99,14 @@
       <label for="graph-type-select">Choose a graph type:</label>
       <select id="graph-type">
         <option value="distance">Distance (km)</option>
-        <option value="duration">Duration (min/km)</option>
+        <option value="duration">Duration (sec/km)</option>
         <option value="calories">Calories</option>
       </select>
     </div>
   <div class="wrapper">
     <div id="chart"></div>
     
-    <div id="pie-chart"></div>
+    <div id="pie-chart">Calories per month:</div>
   </div>
     <div id="legend"></div>
     <div class="tooltip"></div>
@@ -126,18 +139,24 @@
             return d.Time;
           });
 
+
+          var secPerKm = minKm.map(convertMinPerKmToSecondsPerKm);
+
+
+
+
           var caloriesByMonth = d3.rollup(data, 
               v => d3.sum(v, d => parseFloat(d.Calories.replace(",", "."))),
               d => new Date(d.Date.split(".").reverse().join("-")).getMonth()
             );
 
-  // pretvaranje u ključ-vrijednost za svaki mjesec ukupno kalorija istrošenih
-  var caloriesData = Array.from(caloriesByMonth, ([key, value]) => {
-    
-    return { month: parseInt(key)+1, calories: value };
-  });
+            // pretvaranje u ključ-vrijednost za svaki mjesec ukupno kalorija istrošenih
+            var caloriesData = Array.from(caloriesByMonth, ([key, value]) => {
+              
+              return { month: parseInt(key)+1, calories: value };
+            });
 
-  console.log(caloriesData);
+            console.log(caloriesData);
 
 
 
@@ -174,7 +193,7 @@
 
 
           var pieWidth=550;
-          var pieHeight=350;
+          var pieHeight=450;
           var radius = Math.min(width, height) / 3;
 
 
@@ -237,14 +256,27 @@
                           return arc(d);
                       };
                   });
+                  
 
-              g.append("text")
-                  .attr("transform", function(d) {
-                      return "translate(" + labelArc.centroid(d) + ")";
-                  })
-                  .attr("dy", ".35em")
-                  .text(function(d) { return d.data.month; });
+                  var labelArc = d3.arc()
+                                    .outerRadius(radius + 20) // Increase the outer radius to move the labels further away from the center
+                                    .innerRadius(radius + 20); // Increase the inner radius accordingly
 
+                  g.append("text")
+                    .attr("transform", function(d) {
+                      var centroid = labelArc.centroid(d);
+                      var x = centroid[0] * 1.001; // Adjust the multiplier to control the distance from the center
+                      var y = centroid[1] * 1.001; // Adjust the multiplier to control the distance from the center
+                      return "translate(" + x + "," + y + ")";
+                    })
+                    .attr("dy", ".35em")
+                    .attr("fill", "white")
+                    .text(function(d) {
+                      var monthKey = d.data.month;
+                      var monthIndex = [11, 12, 1, 2, 3, 4, 5].indexOf(monthKey);
+                      var months = ["November", "December", "January", "February", "March", "April", "May"];
+                      return months[monthIndex];
+                    });
 
 
           
@@ -257,15 +289,15 @@
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
            
 
-
+               
             function convertMinPerKmToSecondsPerKm(minPerKm) {
-              // Check if the input is a string
+             
               if (typeof minPerKm !== 'string') {
                 console.error('Input must be a string in the format of "mm.ss"');
                 return null;
               }
               
-              // Split the input into minutes and seconds
+              
               var parts = minPerKm.split(":");
               if (parts.length !== 2) {
                 console.error('Input must be a string in the format of "mm.ss"');
@@ -274,25 +306,25 @@
               var minutes = parseInt(parts[0]);
               var seconds = parseInt(parts[1]);
               
-              // Check if minutes and seconds are valid numbers
+            
               if (isNaN(minutes) || isNaN(seconds)) {
                 console.error('Input must be a string in the format of "mm.ss"');
                 return null;
               }
               
-              // Calculate the time in seconds per kilometer
-              return 60 / (minutes + seconds / 60);
-            }
+             
+              return  minutes * 60 + seconds;
+            } 
 
 
 
             //CRTANJE BAR CHARTA SA KALORIJAMA I DATUMIMA
 
-     function drawBarChart() {
+          function drawBarChart() {
       
 
 
-     height=300;
+            height=300;
 
 
          
@@ -346,6 +378,7 @@
             .enter()
             .append("rect")
             .attr("x", function(d,i) {
+             
               return x(dates[i]);
             })
             .attr("y", function(d) {
@@ -365,8 +398,9 @@
                 }
 
                   })
-            .on("mousemove", function(event, d) {
+           .on("mousemove", function(event, d) {
               var date = dates[calories.indexOf(d)];
+              
               var kmValue = km[calories.indexOf(d)];
               var timeValue = time[calories.indexOf(d)];
               var minKmValue = minKm[calories.indexOf(d)];
@@ -388,7 +422,7 @@
                 .style("display", "block");
               tooltip.style("left", event.pageX + "px");
               tooltip.style("top", event.pageY + "px");  
-            })
+            })   
             .on("mouseout", function(d) {
               d3.select(this)
               .attr("fill", function(d){
@@ -481,6 +515,7 @@
 
 
       //CRTANJE GRAFA  F(DATUMI)-> MIN/KM
+      
        function drawLineChart() {
                 var xScale = d3.scaleBand()
                           .domain(dates)
@@ -488,15 +523,23 @@
                           .padding(1.2);
 
 
+  
+
+
+
+     
+
+
                minKm= data.map(function(d) {
       return parseFloat(d["min/km"].replace(":", "."));
     }); 
 
-    var secPerKm = minKm.map(convertMinPerKmToSecondsPerKm);
     
-    
+    console.log(secPerKm);
+
+
             var yScale = d3.scaleLinear()
-                          .domain([3.5, 5.8])
+                          .domain([200, 350])
                           .range([230, 0]);
 
             var xAxis = d3.axisBottom(xScale);
@@ -521,18 +564,18 @@
             .attr("dy", "-.55em")
             .attr("transform", "rotate(-45)");
 
-    svg.append("g")
-       .call(yAxis);
+            svg.append("g")
+              .call(yAxis);
 
-    svg.append("path")
-       .datum(data)
-       .attr("fill", "none")
-       .attr("stroke", "steelblue")
-       .attr("stroke-width", 2.5)
-       .attr("d", d3.line()
-                   .x(function(d) { return xScale(d.Date) + xScale.bandwidth() / 2; })
-                   .y(function(d) { return yScale(parseFloat(d["min/km"].replace(":", "."))); })
-                   .curve(d3.curveMonotoneX));              
+              svg.append("path")
+            .datum(secPerKm) // Use the secPerKm array as the data
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 2.5)
+            .attr("d", d3.line()
+              .x(function(_, i) { return xScale(dates[i]) + xScale.bandwidth() / 2; })
+              .y(function(d) { return yScale(d); })
+              .curve(d3.curveMonotoneX));             
 
 
 
@@ -556,7 +599,7 @@
             .attr("y", -margin.left + 20)
             .attr("transform", "rotate(-90)")
             .attr("fill","white")
-            .text("min/km");
+            .text("sec/km");
 
        
 
@@ -570,7 +613,7 @@
 
 
       
-      function drawPieChart() {
+      function drawBar2Chart() {
         height=300;
         
         var legend = legendSvg.append("g")
@@ -771,7 +814,7 @@ var x = d3.scaleBand()
           svg.selectAll("*").remove();
           legendSvg.selectAll("*").remove();
           
-          drawPieChart();
+          drawBar2Chart();
         }
       }
       
