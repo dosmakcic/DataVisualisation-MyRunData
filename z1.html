@@ -21,18 +21,7 @@
       
       
     }
-    #detail {
-      position: absolute;
-      display: none;
-      background-color: #fff;
-      border: 1px solid #010101;
-      padding: 10px;
-      border-radius: 1.5em;
-      font-family:'Rockwell';
-      text-decoration-style: wavy;
-      background-color: aquamarine;
-      color: blue;
-    }
+    
    
     .tooltip{
       position:absolute;
@@ -110,14 +99,14 @@
   </div>
     <div id="legend"></div>
     <div class="tooltip"></div>
-    <div id="detail"></div>
+   
     <script>
       d3.json("exercise.json")
         .then( function(data) {
 
           
 
-    
+          //izvlačenje podataka iz json filea
 
           var dates = data.map(function(d) {
             return d.Date;
@@ -139,8 +128,8 @@
             return d.Time;
           });
 
-
-          var secPerKm = minKm.map(convertMinPerKmToSecondsPerKm);
+         
+          var secPerKm = minKm.map(convertMinPerKmToSecondsPerKm);  //konvertanje u sekunde za skalu
 
 
 
@@ -150,20 +139,28 @@
               d => new Date(d.Date.split(".").reverse().join("-")).getMonth()
             );
 
+
+
+
             // pretvaranje u ključ-vrijednost za svaki mjesec ukupno kalorija istrošenih
             var caloriesData = Array.from(caloriesByMonth, ([key, value]) => {
               
               return { month: parseInt(key)+1, calories: value };
             });
 
-            console.log(caloriesData);
+          
 
 
 
           var legendData1 = [
               { color: "aqua", label: "Time < 25" },
-              { color: "blue", label: "Time >= 25" }
+              { color: "blue", label: "Time >= 25" }    //legenda za  bar chart
             ];
+
+           var legendData2 = [
+                          { color: "lightgreen", label: "Time < 25" },
+                          { color: "green", label: "Time >= 25" }
+                        ];                                           //legenda za  bar chart
 
 
 
@@ -173,17 +170,11 @@
           .attr("width", 200)
           .attr("height", 50);
 
-          var legendData2 = [
-                          { color: "lightgreen", label: "Time < 25" },
-                          { color: "green", label: "Time >= 25" }
-                        ];
+
+
+       
          
-        
-
-
-
-
-
+        //prvi korak pripremanje dimenzija za bar chartove,graf i pie chart
 
 
           var width = 700;
@@ -192,7 +183,7 @@
 
 
 
-          var pieWidth=550;
+          var pieWidth=560;
           var pieHeight=450;
           var radius = Math.min(width, height) / 3;
 
@@ -200,29 +191,33 @@
 
 
           
-          var color = d3.scaleOrdinal(d3.schemeCategory10);
+          var color = d3.scaleOrdinal(d3.schemeCategory10);  //pripremanje boja za pie chart
 
           var pieSvg=d3.select("#pie-chart")
                       .append("svg")
                       .attr("width", pieWidth)
                       .attr("height", pieHeight)
                       .append("g")
-                      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+                      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");  //stvaranje elementa(visina,sirina)
 
 
-                      var pie = d3.pie()
-    .value(function(d) { return d.calories; })
-    .sort(null);
+        var pie = d3.pie()
+                    .value(function(d) { return d.calories; })
+                    .sort(null);
 
-              var arc = d3.arc()
-                  .outerRadius(radius - 10)
-                  .innerRadius(0);
+      var arc = d3.arc()
+          .outerRadius(radius - 10)
+          .innerRadius(0);
 
-              var labelArc = d3.arc()
-                  .outerRadius(radius - 40)
-                  .innerRadius(radius - 40);
+      var labelArc = d3.arc()
+          .outerRadius(radius - 40)
+          .innerRadius(radius - 40);
 
-              var g = pieSvg.selectAll(".arc")
+
+       var tooltip=d3.select(".tooltip");
+
+
+       var g = pieSvg.selectAll(".arc")
                   .data(pie(caloriesData))
                   .enter().append("g")
                   .attr("class", "arc")
@@ -234,6 +229,13 @@
                             var a = (d.startAngle + d.endAngle) / 2 - Math.PI / 2;
                             return "translate(" + Math.cos(a) * 10 + "," + Math.sin(a) * 10 + ")";
                           });
+
+                          tooltip
+                                .style("display", "block")
+                                .style("left", event.pageX + 10 + "px")
+                                .style("top", event.pageY + 10 + "px")
+                                .html("Month: " + d.data.month + "<br>Calories: " + d.data.calories);
+                                        
                       })
 
                   .on("mouseout", function(event, d) {
@@ -241,6 +243,10 @@
                           .transition()
                           .duration(200)
                           .attr("transform", "translate(0,0)");
+
+                        tooltip
+                               .style("display", "none");
+
                       });
 
 
@@ -255,18 +261,18 @@
                           d.endAngle = i(t);
                           return arc(d);
                       };
-                  });
+                  }); 
                   
 
                   var labelArc = d3.arc()
-                                    .outerRadius(radius + 20) // Increase the outer radius to move the labels further away from the center
-                                    .innerRadius(radius + 20); // Increase the inner radius accordingly
+                                    .outerRadius(radius + 20) 
+                                    .innerRadius(radius + 20); 
 
                   g.append("text")
                     .attr("transform", function(d) {
                       var centroid = labelArc.centroid(d);
-                      var x = centroid[0] * 1.001; // Adjust the multiplier to control the distance from the center
-                      var y = centroid[1] * 1.001; // Adjust the multiplier to control the distance from the center
+                      var x = centroid[0] * 1.001; // za razmak slova od pie charta
+                      var y = centroid[1] * 1.001; // za razmak slova od pie charta
                       return "translate(" + x + "," + y + ")";
                     })
                     .attr("dy", ".35em")
@@ -437,9 +443,9 @@
                     });
 
               d3.select(".tooltip")
-                .style("display", "none");
+                .style("display", "none");   
             })
-            .transition()
+            .transition()     //za animaciju kod bar charta tj. tranziciju
             .duration(1000)
             .delay(function(d, i) {
               return i * 100;
@@ -450,18 +456,6 @@
             .attr("height", function(d) {
               return height - margin.top - margin.bottom - y(d);
             });
-
-        /*    .on("click", function(event,d) {
-              var date = dates[calories.indexOf(d)];
-              var kmValue = km[calories.indexOf(d)];
-              var timeValue = time[calories.indexOf(d)];
-              var minKmValue = minKm[calories.indexOf(d)];
-            var detail = d3.select("#detail")
-
-            .html("Date: " + date  + "<br>Km: " + kmValue + "<br>Time: " + timeValue + "<br>min/km: " + minKmValue)
-            .style("display", "block");
-               });
-*/
 
 
 
@@ -535,7 +529,7 @@
     }); 
 
     
-    console.log(secPerKm);
+   
 
 
             var yScale = d3.scaleLinear()
@@ -546,12 +540,7 @@
             var yAxis = d3.axisLeft(yScale);
 
 
-           /* var svg = d3.select("body")
-                .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")"); */
+         
 
              
 
@@ -568,7 +557,7 @@
               .call(yAxis);
 
               svg.append("path")
-            .datum(secPerKm) // Use the secPerKm array as the data
+            .datum(secPerKm) 
             .attr("fill", "none")
             .attr("stroke", "steelblue")
             .attr("stroke-width", 2.5)
@@ -579,7 +568,7 @@
 
 
 
-                   svg
+          svg
             .append("text")
             .attr("class", "x-label")
             .attr("text-anchor", "end")
@@ -790,7 +779,15 @@ var x = d3.scaleBand()
         console.log("Drawing pie chart");
       }
 
-      function drawGraph() {
+
+
+
+
+
+
+
+
+      function drawGraph() {         //funkcija koja se poziva odabirom na opciju 
         const graphType = document.getElementById("graph-type").value;
         
         
@@ -820,7 +817,7 @@ var x = d3.scaleBand()
       
       drawGraph();
 
-      d3.select("#graph-type").on("change", drawGraph);
+      d3.select("#graph-type").on("change", drawGraph); //pri promjeni pozovi jednu od 3 funkcije 
 
 
 
