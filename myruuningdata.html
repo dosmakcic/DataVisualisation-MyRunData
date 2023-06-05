@@ -57,6 +57,7 @@
   flex-direction: row;
   align-items: flex-start;
   width: auto;
+  height: 400px;
 
   
 }
@@ -80,10 +81,17 @@
  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.mytitle{
+  color: #fff;
+  text-align: center;
+  font-size: 40px;
+}
+
 
     </style>
   </head>
   <body>
+    <div class="mytitle">My running data</div>
     <div class="selector">
       <label for="graph-type-select">Choose a graph type:</label>
       <select id="graph-type">
@@ -153,13 +161,13 @@
 
 
           var legendData1 = [
-              { color: "aqua", label: "Time < 25" },
-              { color: "blue", label: "Time >= 25" }    //legenda za  bar chart
+              { color: "aqua", label: "Time < 25 min" },
+              { color: "blue", label: "Time >= 25 min" }    //legenda za  bar chart
             ];
 
            var legendData2 = [
-                          { color: "lightgreen", label: "Time < 25" },
-                          { color: "green", label: "Time >= 25" }
+                          { color: "lightgreen", label: "Time < 25 min" },
+                          { color: "green", label: "Time >= 25 min" }
                         ];                                           //legenda za  bar chart
 
 
@@ -234,7 +242,7 @@
                                 .style("display", "block")
                                 .style("left", event.pageX + 10 + "px")
                                 .style("top", event.pageY + 10 + "px")
-                                .html("Month: " + d.data.month + "<br>Calories: " + d.data.calories);
+                                .html("Calories: " + d.data.calories);
                                         
                       })
 
