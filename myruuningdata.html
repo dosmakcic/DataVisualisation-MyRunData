@@ -201,7 +201,7 @@
           
           var color = d3.scaleOrdinal(d3.schemeCategory10);  //pripremanje boja za pie chart
 
-          var pieSvg=d3.select("#pie-chart")
+          var pieSvg=d3.select("#pie-chart")  //dio koda iskoristen iz https://www.educative.io/answers/how-to-create-a-pie-chart-using-d3  
                       .append("svg")
                       .attr("width", pieWidth)
                       .attr("height", pieHeight)
@@ -373,6 +373,7 @@
 
 
       //skala za podatke x os i y os
+      
       var x = d3.scaleBand()
             .domain(dates)
             .range([0, width - margin.left - margin.right])
